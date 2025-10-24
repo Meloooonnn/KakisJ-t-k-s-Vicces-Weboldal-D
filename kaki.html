@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A Fos Fajtái — Labirintus</title>
+  <style>
+    :root{
+      --bg:#222;
+      --panel-bg: rgba(0,0,0,0.5);
+      --tile-size: 40px;
+      --wall-color: rgba(0,0,0,0.7);
+      --path-color: rgba(255,255,255,0.06);
+    }
+
+    html,body{height:100%; margin:0; font-family: Arial, Helvetica, sans-serif; background: var(--bg);}
+    body{
+      background-image: url("WC.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: white;
+      font-weight: bold;
+    }
+
+    /* két oszlop: bal tartalom, jobb játék */
+    .wrap{
+      display:flex;
+      gap:24px;
+      padding:24px;
+      align-items:flex-start;
+      min-height:100vh;
+      box-sizing:border-box;
+      background: linear-gradient(to right, rgba(0,0,0,0.35), rgba(0,0,0,0.0));
+    }
+
+    .content{
+      flex:1 1 60%;
+      background: var(--panel-bg);
+      padding:20px;
+      border-radius:10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      max-width:calc(100% - 460px);
+    }
+
+    /* játékpanel jobbra */
+    .game-panel{
+      width:420px;
+      min-width:320px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.45));
+      padding:16px;
+      border-radius:10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+    }
+
+    h1{font-size:2.2em; margin:6px 0 8px 0; text-shadow: 2px 2px 4px black;}
+    h2{font-size:1.4em; margin:14px 0 6px 0;}
+    p, li{ font-size:1.15em; margin:6px 0; text-shadow:1px 1px 2px black;}
+    ol{ padding-left:1.1em; margin:8px 0;}
+
+    /* Labirintus rács */
+    .maze {
+      display: grid;
+      grid-template-columns: repeat(10, var(--tile-size));
+      grid-auto-rows: var(--tile-size);
+      gap:3px;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      padding:12px;
+      border-radius:8px;
+      margin:10px 0;
+    }
+
+    .cell{
+      width:var(--tile-size);
+      height:var(--tile-size);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+      user-select:none;
+      border-radius:4px;
+      box-sizing:border-box;
+      font-size: 1.05em;
+    }
+    .cell.wall { background: var(--wall-color); }
+    .cell.path { background: var(--path-color); color: white; }
+    .cell.goal { background: linear-gradient(180deg, rgba(100,100,255,0.15), rgba(255,255,255,0.04)); color: yellow; text-shadow: 1px 1px 2px black; }
+    .cell.player { background: linear-gradient(180deg, rgba(255,180,90,0.12), rgba(255,255,255,0.02)); font-size:1.2em; }
+
+    .status{ margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .badge{ background: rgba(0,0,0,0.5); padding:8px 10px; border-radius:8px; font-size:0.95em;}
+    .found{ background: linear-gradient(90deg, #2b662b, #4aa84a); color:white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
+
+    .controls{ margin-top:12px; display:flex; gap:8px; justify-content:center; }
+    .btn {
+      padding:8px 12px;
+      background:#443531;
+      color:white;
+      border-radius:8px;
+      cursor:pointer;
+      user-select:none;
+      border: none;
+      font-weight:bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .small-note{ font-size:0.9em; opacity:0.9; margin-top:8px; }
+
+    /* reszponzív: kisebb képernyőn a játék alá kerülhet */
+    @media (max-width:900px){
+      .wrap{ flex-direction:column; padding:12px; }
+      .content{ max-width:100%; }
+      .game-panel{ width:100%; min-width:unset; }
+      :root{ --tile-size:34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- BAL TARTALOM (megtartott tartalmad, kicsit rendezve) -->
+    <div class="content">
+      <h1>Miért szar a fos?</h1>
+      <p>Rengetegen kérdezitek, ezért most megválaszolom.</p>
+      <hr>
+
+      <h2>A fos fajtái</h2>
+      <ol>
+        <li>Híg fos</li>
+        <li>Invisible</li>
+        <li>Rotyogós</li>
+        <li>Büdös</li>
+        <li>Szilárd</li>
+        <li>Finom</li>
+        <li>Kukoricás</li>
+        <li>Babos</li>
+        <li>Tojásos</li>
+      </ol>
+
+      <hr>
+      <a href="https://hu.wikipedia.org/wiki/Batthy%C3%A1ny_Lajos_(minisztereln%C3%B6k)" class="btn" style="text-decoration:none;">TOP 5 Nyilvános WC</a>
+      <hr>
+
+      <h2>Batthyány Lajos kedvenc fosfajtái</h2>
+      <p>Híg fos</p>
+      <p>Gégényi fos</p>
+      <p>Fostos fos</p>
+      <p>Orosz fos</p>
+      <p>Jumbo fos</p>
+      <p>Madafaking fos</p>
+      <p>FUCKASS FOS</p>
+
+      <h3 style="color: rgb(75,40,40); text-shadow: 4px 4px 6px rgb(251,255,5);">"A BATTHYÁNY FOS"</h3>
+    </div>
+
+    <!-- JOBB JÁTÉKPANEL -->
+    <div class="game-panel" aria-label="Labirintus játék">
+      <h2 style="margin:0 0 6px 0;">Keresd meg a <span style="color:gold">6</span> és <span style="color:gold">7</span>-es mezőt!</h2>
+      <p class="small-note">Irányítás: nyilak vagy W A S D. Mobilon használhatod a gombokat.</p>
+
+      <div id="maze" class="maze" role="grid" aria-label="Labirintus rács"></div>
+
+      <div class="status">
+        <div id="posBadge" class="badge">Pozíció: —</div>
+        <div id="found6" class="badge">6 megtalálva: <strong id="f6">nem</strong></div>
+        <div id="found7" class="badge">7 megtalálva: <strong id="f7">nem</strong></div>
+      </div>
+
+      <div class="controls" aria-hidden="false">
+        <button class="btn" id="upBtn">↑</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="leftBtn">←</button>
+          <button class="btn" id="downBtn">↓</button>
+          <button class="btn" id="rightBtn">→</button>
+        </div>
+        <button class="btn" id="resetBtn" style="background:#6b4e3d;">Újrakezd</button>
+      </div>
+
+      <p class="small-note">Gyűjtsd össze mindkettőt! Amikor mind megvan, kapsz egy kis gratulációt 🎉</p>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Labirintus logika
+     *
+     * Mátrix 10x10:
+     * 0 = fal
+     * 1 = út
+     * 6 = cél (szám6)
+     * 7 = cél (szám7)
+     *
+     * A felület rendereli a rácsot, mozgatja a játékost (player),
+     * és jelzi, ha megtaláltad a 6-ost vagy 7-est.
+     ***********************/
+
+    const mazeEl = document.getElementById('maze');
+    const posBadge = document.getElementById('posBadge');
+    const f6El = document.getElementById('f6');
+    const f7El = document.getElementById('f7');
+
+    // egyszerű, kézzel tervezett labirintus 10x10
+    const MAP = [
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,1,1,1,0,1,1,1,1,0],
+      [0,1,0,1,0,1,0,0,1,0],
+      [0,1,0,1,1,1,0,6,1,0], // 6 itt (3,7)
+      [0,1,0,0,0,1,0,0,1,0],
+      [0,1,1,1,0,1,1,1,1,0],
+      [0,0,0,1,0,0,0,0,1,0],
+      [0,7,1,1,1,1,1,0,1,0], // 7 itt (7,1)
+      [0,1,0,0,0,0,1,0,1,0],
+      [0,0,0,0,0,0,0,0,0,0]
+    ];
+
+    const ROWS = MAP.length;
+    const COLS = MAP[0].length;
+
+    // játékos kezdőpozíció
+    let player = { r: 1, c: 1 }; // biztosan járható hely
+    let found6 = false;
+    let found7 = false;
+
+    // létrehozás
+    function renderMaze(){
+      mazeEl.innerHTML = '';
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          const val = MAP[r][c];
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          if(val === 0) cell.classList.add('wall');
+          else cell.classList.add('path');
+
+          // ha cél
+          if(val === 6){
+            cell.classList.add('goal');
+            cell.textContent = '6';
+          }
+          if(val === 7){
+            cell.classList.add('goal');
+            cell.textContent = '7';
+          }
+
+          // ha itt van a játékos
+          if(r === player.r && c === player.c){
+            cell.classList.remove('wall');
+            cell.classList.add('player');
+            cell.innerHTML = '💩';
+          }
+
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          mazeEl.appendChild(cell);
+        }
+      }
+
+      posBadge.textContent = `Pozíció: (${player.r}, ${player.c})`;
+      f6El.textContent = found6 ? 'igen' : 'nem';
+      f7El.textContent = found7 ? 'igen' : 'nem';
+
+      // stílus: ha megtaláltad, jelöld a badge-t
+      document.getElementById('found6').classList.toggle('found', found6);
+      document.getElementById('found7').classList.toggle('found', found7);
+    }
+
+    // mozgatás ellenőrzése
+    function canMoveTo(r,c){
+      if(r<0||c<0||r>=ROWS||c>=COLS) return false;
+      return MAP[r][c] !== 0;
+    }
+
+    function movePlayer(dr, dc){
+      const nr = player.r + dr;
+      const nc = player.c + dc;
+      if(canMoveTo(nr,nc)){
+        player.r = nr; player.c = nc;
+        checkCurrent();
+        renderMaze();
+      }
+    }
+
+    function checkCurrent(){
+      const val = MAP[player.r][player.c];
+      if(val === 6 && !found6){
+        found6 = true;
+        flashMessage('Megtaláltad a 6-ost! 🎉');
+      }
+      if(val === 7 && !found7){
+        found7 = true;
+        flashMessage('Megtaláltad a 7-est! 🎉');
+      }
+      if(found6 && found7){
+        setTimeout(()=>{ alert('Gratulálok — mindkét számot megtaláltad! 🎊'); }, 120);
+      }
+    }
+
+    // gyors visszajelzés (kis lebegő üzenet)
+    function flashMessage(text){
+      const msg = document.createElement('div');
+      msg.textContent = text;
+      msg.style.position = 'fixed';
+      msg.style.right = '24px';
+      msg.style.top = '24px';
+      msg.style.background = 'rgba(0,0,0,0.7)';
+      msg.style.color = 'white';
+      msg.style.padding = '10px 14px';
+      msg.style.borderRadius = '8px';
+      msg.style.zIndex = 9999;
+      msg.style.boxShadow = '0 8px 24px rgba(0,0,0,0.6)';
+      document.body.appendChild(msg);
+      setTimeout(()=>{ msg.style.transition='opacity 300ms'; msg.style.opacity='0'; }, 900);
+      setTimeout(()=>{ msg.remove(); }, 1300);
+    }
+
+    // billentyűzet kezelése
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { movePlayer(-1,0); e.preventDefault(); }
+      else if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { movePlayer(1,0); e.preventDefault(); }
+      else if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { movePlayer(0,-1); e.preventDefault(); }
+      else if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { movePlayer(0,1); e.preventDefault(); }
+    });
+
+    // gombok
+    document.getElementById('upBtn').addEventListener('click', ()=>movePlayer(-1,0));
+    document.getElementById('downBtn').addEventListener('click', ()=>movePlayer(1,0));
+    document.getElementById('leftBtn').addEventListener('click', ()=>movePlayer(0,-1));
+    document.getElementById('rightBtn').addEventListener('click', ()=>movePlayer(0,1));
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+    function resetGame(){
+      player = { r:1, c:1 };
+      found6 = false;
+      found7 = false;
+      renderMaze();
+    }
+
+    // kezdeti render
+    renderMaze();
+
+    // érintéses swipe támogatás (egyszerű): bal/jobb/fel/le rövid swipe
+    (function addSimpleSwipe(){
+      let startX=0, startY=0, endX=0, endY=0;
+      window.addEventListener('touchstart', (e)=>{ const t=e.touches[0]; startX=t.clientX; startY=t.clientY; }, {passive:true});
+      window.addEventListener('touchend', (e)=>{ endX = (e.changedTouches[0]||{}).clientX || startX; endY = (e.changedTouches[0]||{}).clientY || startY;
+        const dx = endX - startX, dy = endY - startY;
+        if(Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+        if(Math.abs(dx) > Math.abs(dy)){
+          if(dx>0) movePlayer(0,1); else movePlayer(0,-1);
+        } else {
+          if(dy>0) movePlayer(1,0); else movePlayer(-1,0);
+        }
+      }, {passive:true});
+    })();
+  </script>
+</body>
+</html>
+
+
+
